@@ -207,8 +207,8 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                     % Find index of sample in dataBuffer with timestamp value trigMoment
                     trigSampleIndex = find(app.TimestampsFIFOBuffer(:,1) == app.trigMoment, 1, 'first');
                     % Find index of sample in dataBuffer to complete the capture
-                    lastSampleIndex = round((trigSampleIndex + (app.window.Value/2) * app.DAQSession.Rate));
-                    firstSampleIndex = round((trigSampleIndex - (app.window.Value/2) * app.DAQSession.Rate));
+                    lastSampleIndex = round((trigSampleIndex + (app.npts.Value/2) * app.DAQSession.Rate));
+                    firstSampleIndex = round((trigSampleIndex - ((app.npts.Value/2)-1) * app.DAQSession.Rate));
                     
                     app.CapturedData(app.wavecount).Metadata=gathermetadata(app);
                     app.CapturedData(app.wavecount).Data = app.DataFIFOBuffer(firstSampleIndex:lastSampleIndex, :);
@@ -809,16 +809,16 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                     'Species = ', eod(i).species, ';',...
                     'Location = ', eod(i).location, ';',...
                     'Temperature = ', eod(i).temp, ';',...
-                    'Comments = ', eod(i).comments,...
-                    'Gain =  ', eod(i).gain,...
-                    'Coupling =  ', coupling...
-                    'Low Pass = ', eod(i).LP_filter,...
-                    'High Pass = ', eod(i).HP_filter,...
-                    'Conductivity = ', eod(i).conductivity,...
-                    'Voltage Divider = ', eod(i).vd,...
-                    'EOD Calibrated = ', eod(i).calibrationratio,...
-                    'EOD Calibration Ratio = ', eod(i).calibrationratio,...
-                    'EOD Calibration Distance = ', eod(i).calibrationdistance];
+                    'Comments = ', eod(i).comments, ';',...
+                    'Gain =  ', eod(i).gain,';', ...
+                    'Coupling =  ', coupling,';',...
+                    'LowPass = ', eod(i).LP_filter,';',...
+                    'HighPass = ', eod(i).HP_filter,';',...
+                    'Conductivity = ', eod(i).conductivity,';',...
+                    'VoltageDivider = ', eod(i).vd,';',...
+                    'EODCalibrated = ', eod(i).calibrated,';',...
+                    'EODCalibrationRatio = ', eod(i).calibrationratio,';',...
+                    'EODCalibrationDistance = ', eod(i).calibrationdistance];
                 nchar_text = length(strjoin(wave_text));
                 %  writes a multiwave file from the data in memory to the currently opened
                 fwrite(fout,version,'char');
@@ -864,6 +864,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
              app.filebrowser.Data=b;  
             
         end
+        
     end          
 
     % Callbacks that handle component events
@@ -1337,25 +1338,25 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         % Key press function: DataAcquisitionLiveFigure
         function DataAcquisitionLiveFigureKeyPress(app, event)
             key = event.Key;
-%             switch key
-%                 case 'd'
-%                     app.TabGroup.SelectedTab=app.DAQSetupTab;
-%                 case 'a'
-%                     app.TabGroup.SelectedTab=app.AcquireTab;
-%                 case'r'
-%                     app.TabGroup.SelectedTab=app.RecordingsTab;
-%                 case 's'
-%                     app.TabGroup.SelectedTab=app.SaveTab;
-%                 case 'c'
-%                     if app.TabGroup.SelectedTab == app.AcquireTab
-%                         app.CaptureButtonPushed
-%                     end
-%                 case 'i'
-%                     if app.TabGroup.SelectedTab == app.AcquireTab
-%                         app.CapturedData(app.wavecount-1).Data=app.CapturedData(app.wavecount-1).Data*-1;
-%                         set(app.CapturedPlotLine, 'XData', app.CapturedData(app.wavecount-1).Time, 'YData', app.CapturedData(app.wavecount-1).Data);
-%                     end
-%              end
+            switch key
+                case 'd'
+                    app.TabGroup.SelectedTab=app.DAQSetupTab;
+                case 'a'
+                    app.TabGroup.SelectedTab=app.AcquireTab;
+                case'r'
+                    app.TabGroup.SelectedTab=app.RecordingsTab;
+                case 's'
+                    app.TabGroup.SelectedTab=app.SaveTab;
+                case 'c'
+                    if app.TabGroup.SelectedTab == app.AcquireTab
+                        app.CaptureButtonPushed
+                    end
+                case 'i'
+                    if app.TabGroup.SelectedTab == app.AcquireTab
+                        app.CapturedData(app.wavecount-1).Data=app.CapturedData(app.wavecount-1).Data*-1;
+                        set(app.CapturedPlotLine, 'XData', app.CapturedData(app.wavecount-1).Time, 'YData', app.CapturedData(app.wavecount-1).Data);
+                    end
+             end
         
         end
 
@@ -1390,11 +1391,16 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         % Value changed function: window
         function windowValueChanged(app, event)
             value = app.window.Value;
+            npts=value*app.RateEdit.Value;
+            app.window.Value=pow2(floor(log2(npts)))/app.RateEdit.Value;
+            value= app.window.Value;
             app.nptsEditField.Value=value*app.RateEdit.Value;
         end
 
         % Value changed function: nptsEditField
         function nptsEditFieldValueChanged(app, event)
+            value = app.nptsEditField.Value;
+            app.nptsEditField.Value=pow2(floor(log2(value)));
             value = app.nptsEditField.Value;
             app.window.Value=value/app.RateEdit.Value;
         end
@@ -1410,30 +1416,6 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             set(app.SavedPlotLine, 'XData', NaN, 'YData', NaN);
             set(app.CapturedPlotLine, 'XData',NaN,'YData',NaN);
             set(app.LivePlotLine,'XData',NaN,'YData',NaN);
-        end
-
-        % Window key press function: DataAcquisitionLiveFigure
-        function DataAcquisitionLiveFigureWindowKeyPress(app, event)
-            key = event.Key;
-            switch key
-                case 'd'
-                    app.TabGroup.SelectedTab=app.DAQSetupTab;
-                case 'a'
-                    app.TabGroup.SelectedTab=app.AcquireTab;
-                case'r'
-                    app.TabGroup.SelectedTab=app.RecordingsTab;
-                case 's'
-                    app.TabGroup.SelectedTab=app.SaveTab;
-                case 'c'
-                    if app.TabGroup.SelectedTab == app.AcquireTab
-                        app.CaptureButtonPushed
-                    end
-                case 'i'
-                    if app.TabGroup.SelectedTab == app.AcquireTab
-                        app.CapturedData(app.wavecount-1).Data=app.CapturedData(app.wavecount-1).Data*-1;
-                        set(app.CapturedPlotLine, 'XData', app.CapturedData(app.wavecount-1).Time, 'YData', app.CapturedData(app.wavecount-1).Data);
-                    end
-             end
         end
 
         % Button pushed function: InvertSelectedButton
@@ -1455,7 +1437,6 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             app.DataAcquisitionLiveFigure.Position = [100 100 990 606];
             app.DataAcquisitionLiveFigure.Name = 'Data Acquisition Live';
             app.DataAcquisitionLiveFigure.CloseRequestFcn = createCallbackFcn(app, @DataAcquisitionLiveCloseRequest, true);
-            app.DataAcquisitionLiveFigure.WindowKeyPressFcn = createCallbackFcn(app, @DataAcquisitionLiveFigureWindowKeyPress, true);
             app.DataAcquisitionLiveFigure.KeyPressFcn = createCallbackFcn(app, @DataAcquisitionLiveFigureKeyPress, true);
 
             % Create EODRecorder2Label

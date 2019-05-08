@@ -31,8 +31,10 @@ function [eodwave, info, infoText] = ReadEODFile(filename, numToRead)
 
 eodwave = {[]};
 info = struct('version', {}, 'date', {}, 'time', {}, 'specimen', {}, 'species', {}, ...
+                'gain', {},'coupling', {},'lowpass',{},'highpass',{},'conductivity',{},'voltagedivider',{},'calibrated',{},'calibrationratio',{},'calibrationdistance',{}, ...
                 'location', {}, 'temperature', {}, 'comment', {}, 'nBits', {}, ...
-                'nBytes', {}, 'polarity', {}, 'userData', {}, 'sampRate', {}, 'ADrange', {});
+                'nBytes', {}, 'polarity', {}, 'userData', {}, 'sampRate', {}, 'ADrange', {})
+            
 infoText = {''};
 
 if nargin < 1 | isempty(filename) | ~ischar(filename) | (exist(filename) ~= 2)
@@ -73,7 +75,7 @@ try
         infoTextTemp(find(infoTextTemp(1:(end-1)) == 10)) = 32; %replace new lines with spaces
         infoTextTemp = char(infoTextTemp(:).');
         infoText{k} = infoTextTemp;
-		infoTemp = decodewavetex_updated(infoTextTemp);
+		infoTemp = decodewavetex(infoTextTemp,info(k).version);
         
         info(k).date = infoTemp.date;
         info(k).time = infoTemp.time;
@@ -86,6 +88,15 @@ try
         end
         if isfield(infoTemp,'coupling')
             info(k).coupling = infoTemp.coupling;
+        end
+        if info(k).version == 2
+            info(k).conductivity = infoTemp.conductivity;
+            info(k).lowpass = infoTemp.lowpass;
+            info(k).highpass = infoTemp.highpass;
+            info(k).voltagedivider=infoTemp.voltagedivider;
+            info(k).calibrated=infoTemp.eodcalibrated;
+            info(k).calibrationratio=infoTemp.eodcalibrationratio;
+            info(k).calibrationdistance=infoTemp.eodcalibrationdistance;
         end
         info(k).comment = infoTemp.comment;
        
