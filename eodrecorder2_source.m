@@ -94,6 +94,8 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         specimenno_2                  matlab.ui.control.EditField
         AquisitionModeButtonGroup     matlab.ui.container.ButtonGroup
         SingleButton                  matlab.ui.control.ToggleButton
+        MATFileCheckBox               matlab.ui.control.CheckBox
+        EODFileCheckBox               matlab.ui.control.CheckBox
         TimedButton                   matlab.ui.control.ToggleButton
         StartButton                   matlab.ui.control.Button
         StopButton                    matlab.ui.control.Button
@@ -199,7 +201,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                     % A custom trigger condition is defined in trigDetect user function
                     [app.trigActive, app.trigMoment] = app.trigDetect(event.TimeStamps,event.Data, app.level.Value);
             
-                elseif app.capturestate && app.trigActive && ((app.TimestampsFIFOBuffer(end,1)-app.trigMoment) > app.window.Value/2)
+                elseif app.capturestate && app.trigActive && ((app.TimestampsFIFOBuffer(end,1)-app.trigMoment) > app.window.Value)
                     % State: "Acquired enough data for a complete capture"
                     % If triggered and if there is enough data in dataBuffer for triggered
                     % capture, then captureData can be obtained from dataBuffer.
@@ -207,8 +209,8 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                     % Find index of sample in dataBuffer with timestamp value trigMoment
                     trigSampleIndex = find(app.TimestampsFIFOBuffer(:,1) == app.trigMoment, 1, 'first');
                     % Find index of sample in dataBuffer to complete the capture
-                    lastSampleIndex = round((trigSampleIndex + (app.npts.Value/2) * app.DAQSession.Rate));
-                    firstSampleIndex = round((trigSampleIndex - ((app.npts.Value/2)-1) * app.DAQSession.Rate));
+                    lastSampleIndex = round((trigSampleIndex + (app.nptsEditField.Value/2)));
+                    firstSampleIndex = round((trigSampleIndex - ((app.nptsEditField.Value/2)-1)));
                     
                     app.CapturedData(app.wavecount).Metadata=gathermetadata(app);
                     app.CapturedData(app.wavecount).Data = app.DataFIFOBuffer(firstSampleIndex:lastSampleIndex, :);
@@ -761,10 +763,9 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             end
         end
         
-        function saveEOD(~,datain,matout,eodout)
-            fout = fopen(eodout, 'w');
+        function saveEOD(app,datain,matout,eodout)
             eod=[];
-             for i=1:length(datain)
+            for i=1:length(datain)
                  eod(i).DeviceInfo=datain(i).Metadata.DeviceInfo;
                  eod(i).Channel=datain(i).Metadata.Channel;
                  eod(i).MeasurementType=datain(i).Metadata.MeasurementType;
@@ -789,55 +790,65 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                  eod(i).calibrated=strrep(strrep(sprintf('%d', datain(i).Metadata.calibrated), '1', 'True'), '0', 'False');
                  eod(i).calibrationratio=datain(i).Metadata.calibrationratio;
                  eod(i).calibrationdistance=datain(i).Metadata.calibrationdistance;
+            end
             
-                %write to binary EOD File
-                version = 2; %new version for the gallant lab
-                n_bits = eod(i).DeviceInfo.Subsystems.Resolution;
-                adrange=2^eod(i).DeviceInfo.Subsystems.Resolution;
-                n_bytes = 2;
-                data_polarity = 2;
-                user_data = [0 0 0 0 0 0];
-                s_rate = eod(i).Rate;
-                n_pts = length(eod(i).wave);
-                wave = eod(i).wave;
-                date = eod(i).date;
-                time = eod(i).time;
-                coupling= eod(i).amplifiercoupling;
-                wave_text=['Time = ', time, ';',...
-                    'Date = ', date, ';',...
-                    'Specimen = ', eod(i).specimenno, ';',...
-                    'Species = ', eod(i).species, ';',...
-                    'Location = ', eod(i).location, ';',...
-                    'Temperature = ', eod(i).temp, ';',...
-                    'Comments = ', eod(i).comments, ';',...
-                    'Gain =  ', eod(i).gain,';', ...
-                    'Coupling =  ', coupling,';',...
-                    'LowPass = ', eod(i).LP_filter,';',...
-                    'HighPass = ', eod(i).HP_filter,';',...
-                    'Conductivity = ', eod(i).conductivity,';',...
-                    'VoltageDivider = ', eod(i).vd,';',...
-                    'EODCalibrated = ', eod(i).calibrated,';',...
-                    'EODCalibrationRatio = ', eod(i).calibrationratio,';',...
-                    'EODCalibrationDistance = ', eod(i).calibrationdistance];
-                nchar_text = length(strjoin(wave_text));
-                %  writes a multiwave file from the data in memory to the currently opened
-                fwrite(fout,version,'char');
-                fwrite(fout,nchar_text,'short');
-                %  convert wave_text into array of ascii integers
-                fwrite(fout,strjoin(wave_text),'char');
-                % output a null character to terminate string
-                %count=fwrite(fout,0,'char');  
-                fwrite(fout,n_bits,'char');
-                fwrite(fout,n_bytes,'char');
-                fwrite(fout,data_polarity,'char');
-                fwrite(fout,user_data,'float');
-                fwrite(fout,s_rate,'ulong');
-                fwrite(fout,adrange,'float');
-                fwrite(fout,n_pts,'long');
-                fwrite(fout,wave,'double');
-             end
-            fclose(fout);
-            save(matout,'eod');
+            if app.EODFileCheckBox.Value
+                fout = fopen(eodout, 'w');
+                 for i=1:length(datain)
+                     
+                    %write to binary EOD File
+                    version = 2; %new version for the gallant lab
+                    n_bits = eod(i).DeviceInfo.Subsystems.Resolution;
+                    adrange=2^eod(i).DeviceInfo.Subsystems.Resolution;
+                    n_bytes = 2;
+                    data_polarity = 2;
+                    user_data = [0 0 0 0 0 0];
+                    s_rate = eod(i).Rate;
+                    n_pts = length(eod(i).wave);
+                    wave = eod(i).wave;
+                    date = eod(i).date;
+                    time = eod(i).time;
+                    coupling= eod(i).amplifiercoupling;
+                    wave_text=['Time = ', time, ';',...
+                        'Date = ', date, ';',...
+                        'Specimen = ', eod(i).specimenno, ';',...
+                        'Species = ', eod(i).species, ';',...
+                        'Location = ', eod(i).location, ';',...
+                        'Temperature = ', eod(i).temp, ';',...
+                        'Comments = ', eod(i).comments, ';',...
+                        'Gain =  ', eod(i).gain,';', ...
+                        'Coupling =  ', coupling,';',...
+                        'LowPass = ', eod(i).LP_filter,';',...
+                        'HighPass = ', eod(i).HP_filter,';',...
+                        'Conductivity = ', eod(i).conductivity,';',...
+                        'VoltageDivider = ', eod(i).vd,';',...
+                        'EODCalibrated = ', eod(i).calibrated,';',...
+                        'EODCalibrationRatio = ', eod(i).calibrationratio,';',...
+                        'EODCalibrationDistance = ', eod(i).calibrationdistance];
+                    nchar_text = length(strjoin(wave_text));
+                    %  writes a multiwave file from the data in memory to the currently opened
+                    fwrite(fout,version,'char');
+                    fwrite(fout,nchar_text,'short');
+                    %  convert wave_text into array of ascii integers
+                    fwrite(fout,strjoin(wave_text),'char');
+                    % output a null character to terminate string
+                    %count=fwrite(fout,0,'char');  
+                    fwrite(fout,n_bits,'char');
+                    fwrite(fout,n_bytes,'char');
+                    fwrite(fout,data_polarity,'char');
+                    fwrite(fout,user_data,'float');
+                    fwrite(fout,s_rate,'ulong');
+                    fwrite(fout,adrange,'float');
+                    fwrite(fout,n_pts,'long');
+                    fwrite(fout,wave,'double');
+                 end
+                 fclose(fout);
+            end
+            
+            if app.MATFileCheckBox.Value
+                save(matout,'eod');
+            end
+            
         end
         
         function metaupdate(app)   
@@ -1293,12 +1304,18 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             matfile=fullfile(app.eodfilepath,[app.eodbasename,'.mat']);
             
             if exist(eodfile, 'file') == 2 || exist(matfile,'file') == 2
-                uialert(app.DataAcquisitionLiveFigure,'Please choose a different basename!','File Exists');
+                uialert(app.DataAcquisitionLiveFigure,'A file with this basename (.EOD or .MAT) already exists.  For data security, EOD/MAT pairs can only be created at the same time. Either delete the offending file, or choose a different basename!','File Exists');
                 app.LogStatusText.Text = 'Save was cancelled.';
+         
             else
-                saveEOD(app, app.CapturedData, matfile,eodfile);
-                app.LogStatusText.Text = sprintf('Saved data to ''%s'' !', app.eodbasename);
-                refresh_filebrowser(app);
+                if app.EODFileCheckBox.Value == 0 && app.MATFileCheckBox.Value == 0
+                    uialert(app.DataAcquisitionLiveFigure,'Please choose at least one output type','No output type selected');
+                    app.LogStatusText.Text = 'Nothing was saved!';
+                else
+                    saveEOD(app, app.CapturedData, matfile,eodfile);
+                    app.LogStatusText.Text = sprintf('Saved data to ''%s'' !', app.eodbasename);
+                    refresh_filebrowser(app);
+                end
             end
             
         end
@@ -1962,7 +1979,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             % Create BasenameEditField
             app.BasenameEditField = uieditfield(app.SaveTab, 'text');
             app.BasenameEditField.ValueChangedFcn = createCallbackFcn(app, @BasenameEditFieldValueChanged, true);
-            app.BasenameEditField.Position = [11 72 311 22];
+            app.BasenameEditField.Position = [11 80 311 22];
 
             % Create FilepathEditField
             app.FilepathEditField = uieditfield(app.SaveTab, 'text');
@@ -1982,13 +1999,23 @@ classdef eodrecorder2_source < matlab.apps.AppBase
 
             % Create BasenameEditFieldLabel
             app.BasenameEditFieldLabel = uilabel(app.SaveTab);
-            app.BasenameEditFieldLabel.Position = [11 100 60 22];
+            app.BasenameEditFieldLabel.Position = [11 108 60 22];
             app.BasenameEditFieldLabel.Text = 'File Name';
 
             % Create FilepathEditFieldLabel
             app.FilepathEditFieldLabel = uilabel(app.SaveTab);
             app.FilepathEditFieldLabel.Position = [11 458 48 22];
             app.FilepathEditFieldLabel.Text = 'Filepath';
+
+            % Create MATFileCheckBox
+            app.MATFileCheckBox = uicheckbox(app.SaveTab);
+            app.MATFileCheckBox.Text = '.MAT File';
+            app.MATFileCheckBox.Position = [12 51 72 22];
+
+            % Create EODFileCheckBox
+            app.EODFileCheckBox = uicheckbox(app.SaveTab);
+            app.EODFileCheckBox.Text = '.EOD File';
+            app.EODFileCheckBox.Position = [100 52 74 22];
 
             % Create LogStatusText
             app.LogStatusText = uilabel(app.DataAcquisitionLiveFigure);

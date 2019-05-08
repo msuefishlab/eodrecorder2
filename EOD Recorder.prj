@@ -1,0 +1,74 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration file="C:\Users\jgallant\Documents\MATLAB\eodrecorder2\eodrecorder2\EOD Recorder.prj" location="C:\Users\jgallant\Documents\MATLAB\eodrecorder2\eodrecorder2" name="EOD Recorder" target="target.mlapps" target-name="Package App">
+    <param.appname>EOD Recorder</param.appname>
+    <param.authnamewatermark>Jason Gallant</param.authnamewatermark>
+    <param.email />
+    <param.company />
+    <param.icon />
+    <param.icons />
+    <param.summary>This app is written for recording EOD files from weakly electric fish for field and laboratory use.</param.summary>
+    <param.description>This app requires:
+
+- MATLAB® R2017b or later release
+- Data Acquisition Toolbox™
+- A DAQ device (for example National Instruments or Measurement Computing) which supports analog input voltage measurements and background acquisition
+- A sound card which supports audio input measurements
+- Corresponding hardware support package and device drivers</param.description>
+    <param.screenshot>C:\Users\jgallant\AppData\Local\Temp\tp5a91acd0_17e9_4e9d_a77d_11cb491143f3.png</param.screenshot>
+    <param.version>1.0</param.version>
+    <param.products.name />
+    <param.products.id />
+    <param.products.version />
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>7a4f91a6-f924-48ef-b519-0fd2f595140d</param.guid>
+    <unset>
+      <param.email />
+      <param.company />
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.products.name />
+      <param.products.id />
+      <param.products.version />
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\eodrecorder2.mlapp</file>
+    </fileset.main>
+    <fileset.depfun />
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file location="C:\Users\jgallant\Documents\MATLAB\eodrecorder2" name="eodrecorder2" optional="false">C:\Users\jgallant\Documents\MATLAB\eodrecorder2\eodrecorder2</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2019a</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
