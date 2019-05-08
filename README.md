@@ -1,4 +1,4 @@
-#EODRecorder2
+# EODRecorder2
 Written by Jason Gallant, includes modified code from B. Scott Jackson for EOD reading
 
 ### About this Software
