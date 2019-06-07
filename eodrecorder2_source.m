@@ -36,66 +36,36 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         AcquireTab                    matlab.ui.container.Tab
         SpecimenMetadataPanel         matlab.ui.container.Panel
         WaterParametersLabel_2        matlab.ui.control.Label
-        CommentsTextAreaLabel_3       matlab.ui.control.Label
-        comments                      matlab.ui.control.TextArea
-        DistanceEditFieldLabel_3      matlab.ui.control.Label
-        caldist                       matlab.ui.control.EditField
-        RatioEditFieldLabel           matlab.ui.control.Label
-        calratio                      matlab.ui.control.EditField
-        GainDropDown_2Label           matlab.ui.control.Label
-        calibrated                    matlab.ui.control.CheckBox
-        gain                          matlab.ui.control.DropDown
-        VDDropDown_2Label             matlab.ui.control.Label
-        vd                            matlab.ui.control.DropDown
-        ACDCLabel_3                   matlab.ui.control.Label
-        amplifiercoupling             matlab.ui.control.DropDown
-        HPDropDown_2Label             matlab.ui.control.Label
-        hp                            matlab.ui.control.DropDown
-        LPDropDown_2Label             matlab.ui.control.Label
-        lp                            matlab.ui.control.DropDown
         AmplifierSettingsLabel_2      matlab.ui.control.Label
-        CondEditField_2Label          matlab.ui.control.Label
-        cond                          matlab.ui.control.EditField
-        TempLabel_3                   matlab.ui.control.Label
-        temp                          matlab.ui.control.EditField
-        LocationEditFieldLabel_3      matlab.ui.control.Label
-        location                      matlab.ui.control.EditField
-        SpeciesEditFieldLabel_3       matlab.ui.control.Label
-        species                       matlab.ui.control.EditField
         SpecimenEditFieldLabel_3      matlab.ui.control.Label
         specimenno                    matlab.ui.control.EditField
-        DistanceEditFieldLabel_4      matlab.ui.control.Label
-        caldist_2                     matlab.ui.control.EditField
-        RatioEditField_2Label         matlab.ui.control.Label
-        calratio_2                    matlab.ui.control.EditField
-        GainDropDownLabel             matlab.ui.control.Label
-        calibrated_2                  matlab.ui.control.CheckBox
-        gain_2                        matlab.ui.control.DropDown
-        VDDropDownLabel               matlab.ui.control.Label
-        vd_2                          matlab.ui.control.DropDown
-        ACDCLabel_4                   matlab.ui.control.Label
-        amplifiercoupling_2           matlab.ui.control.DropDown
-        HPDropDownLabel               matlab.ui.control.Label
-        hp_2                          matlab.ui.control.DropDown
-        LPDropDownLabel               matlab.ui.control.Label
-        lp_2                          matlab.ui.control.DropDown
-        CondEditFieldLabel            matlab.ui.control.Label
-        cond_2                        matlab.ui.control.EditField
-        TempLabel_4                   matlab.ui.control.Label
-        temp_2                        matlab.ui.control.EditField
-        CommentsTextAreaLabel_4       matlab.ui.control.Label
-        comments_2                    matlab.ui.control.TextArea
-        InvertSelectedButton          matlab.ui.control.Button
-        LocationEditFieldLabel_4      matlab.ui.control.Label
-        location_2                    matlab.ui.control.EditField
-        SpeciesEditFieldLabel_4       matlab.ui.control.Label
-        species_2                     matlab.ui.control.EditField
-        SpecimenEditFieldLabel_4      matlab.ui.control.Label
-        specimenno_2                  matlab.ui.control.EditField
+        SpeciesEditFieldLabel_3       matlab.ui.control.Label
+        species                       matlab.ui.control.EditField
+        LocationEditFieldLabel_3      matlab.ui.control.Label
+        location                      matlab.ui.control.EditField
+        TempLabel_3                   matlab.ui.control.Label
+        temp                          matlab.ui.control.EditField
+        CondEditField_2Label          matlab.ui.control.Label
+        cond                          matlab.ui.control.EditField
+        LPDropDown_2Label             matlab.ui.control.Label
+        lp                            matlab.ui.control.DropDown
+        HPDropDown_2Label             matlab.ui.control.Label
+        hp                            matlab.ui.control.DropDown
+        ACDCLabel_3                   matlab.ui.control.Label
+        amplifiercoupling             matlab.ui.control.DropDown
+        VDDropDown_2Label             matlab.ui.control.Label
+        vd                            matlab.ui.control.DropDown
+        GainDropDown_2Label           matlab.ui.control.Label
+        gain                          matlab.ui.control.DropDown
+        calibrated                    matlab.ui.control.CheckBox
+        RatioEditFieldLabel           matlab.ui.control.Label
+        calratio                      matlab.ui.control.EditField
+        DistanceEditFieldLabel_3      matlab.ui.control.Label
+        caldist                       matlab.ui.control.EditField
+        CommentsTextAreaLabel_3       matlab.ui.control.Label
+        comments                      matlab.ui.control.TextArea
         AquisitionModeButtonGroup     matlab.ui.container.ButtonGroup
         SingleButton                  matlab.ui.control.ToggleButton
-        MATFileCheckBox               matlab.ui.control.CheckBox
-        EODFileCheckBox               matlab.ui.control.CheckBox
         TimedButton                   matlab.ui.control.ToggleButton
         StartButton                   matlab.ui.control.Button
         StopButton                    matlab.ui.control.Button
@@ -115,6 +85,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         WaveFilesListBox              matlab.ui.control.ListBox
         DeleteSelectedButton          matlab.ui.control.Button
         DeleteRecordingsandStartNewSessionButton  matlab.ui.control.Button
+        InvertSelectedButton          matlab.ui.control.Button
         SaveTab                       matlab.ui.container.Tab
         SavetoFileButton              matlab.ui.control.Button
         BasenameEditField             matlab.ui.control.EditField
@@ -123,6 +94,10 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         filebrowser                   matlab.ui.control.Table
         BasenameEditFieldLabel        matlab.ui.control.Label
         FilepathEditFieldLabel        matlab.ui.control.Label
+        MATFileCheckBox               matlab.ui.control.CheckBox
+        EODFileCheckBox               matlab.ui.control.CheckBox
+        ClearRecordingsandStartNewSessionButton  matlab.ui.control.Button
+        AutoNameButton                matlab.ui.control.Button
         LogStatusText                 matlab.ui.control.Label
         StatusLabel                   matlab.ui.control.Label
         savedDataView                 matlab.ui.container.Panel
@@ -132,6 +107,33 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         WaterParametersLabel          matlab.ui.control.Label
         AmplifierSettingsLabel        matlab.ui.control.Label
         CalibrationSettingsLabel      matlab.ui.control.Label
+        SpecimenEditFieldLabel_4      matlab.ui.control.Label
+        specimenno_2                  matlab.ui.control.EditField
+        SpeciesEditFieldLabel_4       matlab.ui.control.Label
+        species_2                     matlab.ui.control.EditField
+        LocationEditFieldLabel_4      matlab.ui.control.Label
+        location_2                    matlab.ui.control.EditField
+        CommentsTextAreaLabel_4       matlab.ui.control.Label
+        comments_2                    matlab.ui.control.TextArea
+        TempLabel_4                   matlab.ui.control.Label
+        temp_2                        matlab.ui.control.EditField
+        CondEditFieldLabel            matlab.ui.control.Label
+        cond_2                        matlab.ui.control.EditField
+        LPDropDownLabel               matlab.ui.control.Label
+        lp_2                          matlab.ui.control.DropDown
+        HPDropDownLabel               matlab.ui.control.Label
+        hp_2                          matlab.ui.control.DropDown
+        ACDCLabel_4                   matlab.ui.control.Label
+        amplifiercoupling_2           matlab.ui.control.DropDown
+        VDDropDownLabel               matlab.ui.control.Label
+        vd_2                          matlab.ui.control.DropDown
+        GainDropDownLabel             matlab.ui.control.Label
+        gain_2                        matlab.ui.control.DropDown
+        calibrated_2                  matlab.ui.control.CheckBox
+        RatioEditField_2Label         matlab.ui.control.Label
+        calratio_2                    matlab.ui.control.EditField
+        DistanceEditFieldLabel_4      matlab.ui.control.Label
+        caldist_2                     matlab.ui.control.EditField
     end
 
     % 2018/02/09 AU
@@ -263,14 +265,14 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                     timesup=timer(app,event.TimeStamps,app.recordlength.Value);
                     
                     if timesup
-                        stopaquire(app)
+                        stopaquire(app);
                     end
                 end
             end
             
         set(app.LivePlotLine, 'XData', app.TimestampsFIFOBuffer, 'YData', app.DataFIFOBuffer);
             if numel(app.TimestampsFIFOBuffer) > 1
-                xlim(app.LiveAxes, [app.TimestampsFIFOBuffer(1), app.TimestampsFIFOBuffer(end)])
+                xlim(app.LiveAxes, [app.TimestampsFIFOBuffer(1), app.TimestampsFIFOBuffer(end)]);
             end
         end
 
@@ -713,17 +715,18 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                     % Convert data from binary file to MAT file
                     matFilepath = fullfile(app.Filepath, app.Filename);
                     app.LogStatusText.Text = 'Saving data...';
-                    drawnow
+                    drawnow;
                     
                     numColumns = 2;
                     binFile2MAT(app, app.TempFilename, matFilepath, numColumns, metadata);
                     app.LogStatusText.Text = sprintf('Saved data to ''%s'' !', app.Filename);
-                    app.LivePlotLine = plot(app.LiveAxes, NaN, NaN);
+                    set(app.LivePlotLine, 'XData', NaN, 'YData', NaN);
+                    drawnow;
                 else
                     % User clicked Cancel in "Save As" dialog
                     % Inform user that data has not been saved
                     app.LogStatusText.Text = 'Save was cancelled.';
-                    app.LivePlotLine = plot(app.LiveAxes, NaN, NaN);
+                    set(app.LivePlotLine, 'XData', NaN, 'YData', NaN);
                 end
             end
         end
@@ -876,6 +879,14 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             
         end
         
+        
+        function createbasename(app)
+            species_string=app.CapturedData(1).Metadata.species;
+            speciesname=strsplit(species_string);
+            mybasename=upper(strcat(speciesname{1}(1),speciesname{2}(1:4),'_',app.CapturedData(1).Metadata.specimenno));
+            app.BasenameEditField.Value=mybasename;
+            app.eodbasename=mybasename;
+        end
     end          
 
     % Callbacks that handle component events
@@ -1216,8 +1227,10 @@ classdef eodrecorder2_source < matlab.apps.AppBase
                 app.StopButton.Text="Stop";
                 app.SinglePanel.Visible="on";
                 app.TimedPanel.Visible="off";
+                app.recordlength.Value=0;
                 %app.OcilliscopePanel.Visible="off";
                 app.mode=1;
+                app.LogRequested=false;
             else
                 app.SinglePanel.Visible="off";
                 app.TimedPanel.Visible="on";
@@ -1352,31 +1365,6 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             app.eodbasename=value;
         end
 
-        % Key press function: DataAcquisitionLiveFigure
-        function DataAcquisitionLiveFigureKeyPress(app, event)
-            key = event.Key;
-            switch key
-                case 'd'
-                    app.TabGroup.SelectedTab=app.DAQSetupTab;
-                case 'a'
-                    app.TabGroup.SelectedTab=app.AcquireTab;
-                case'r'
-                    app.TabGroup.SelectedTab=app.RecordingsTab;
-                case 's'
-                    app.TabGroup.SelectedTab=app.SaveTab;
-                case 'c'
-                    if app.TabGroup.SelectedTab == app.AcquireTab
-                        app.CaptureButtonPushed
-                    end
-                case 'i'
-                    if app.TabGroup.SelectedTab == app.AcquireTab
-                        app.CapturedData(app.wavecount-1).Data=app.CapturedData(app.wavecount-1).Data*-1;
-                        set(app.CapturedPlotLine, 'XData', app.CapturedData(app.wavecount-1).Time, 'YData', app.CapturedData(app.wavecount-1).Data);
-                    end
-             end
-        
-        end
-
         % Value changed function: amplifiercoupling_2, 
         % calibrated_2, calratio_2, comments_2, cond_2, gain_2, 
         % hp_2, location_2, lp_2, species_2, specimenno_2, temp_2, 
@@ -1423,6 +1411,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         end
 
         % Button pushed function: 
+        % ClearRecordingsandStartNewSessionButton, 
         % DeleteRecordingsandStartNewSessionButton
         function DeleteRecordingsandStartNewSessionButtonPushed(app, event)
             app.CapturedData=[];
@@ -1441,6 +1430,11 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             items=refreshwaves(app,app.CapturedData);
             set(app.SavedPlotLine, 'XData', app.CapturedData(app.selectedwave).Time, 'YData', app.CapturedData(app.selectedwave).Data);
         end
+
+        % Button pushed function: AutoNameButton
+        function AutoNameButtonPushed(app, event)
+            createbasename(app);
+        end
     end
 
     % Component initialization
@@ -1454,7 +1448,6 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             app.DataAcquisitionLiveFigure.Position = [100 100 990 606];
             app.DataAcquisitionLiveFigure.Name = 'Data Acquisition Live';
             app.DataAcquisitionLiveFigure.CloseRequestFcn = createCallbackFcn(app, @DataAcquisitionLiveCloseRequest, true);
-            app.DataAcquisitionLiveFigure.KeyPressFcn = createCallbackFcn(app, @DataAcquisitionLiveFigureKeyPress, true);
 
             % Create EODRecorder2Label
             app.EODRecorder2Label = uilabel(app.DataAcquisitionLiveFigure);
@@ -1951,12 +1944,14 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             % Create DeleteSelectedButton
             app.DeleteSelectedButton = uibutton(app.RecordingsTab, 'push');
             app.DeleteSelectedButton.ButtonPushedFcn = createCallbackFcn(app, @DeleteSelectedButtonPushed, true);
+            app.DeleteSelectedButton.FontColor = [1 0 0];
             app.DeleteSelectedButton.Position = [149 416 169 30];
             app.DeleteSelectedButton.Text = 'Delete Selected...';
 
             % Create DeleteRecordingsandStartNewSessionButton
             app.DeleteRecordingsandStartNewSessionButton = uibutton(app.RecordingsTab, 'push');
             app.DeleteRecordingsandStartNewSessionButton.ButtonPushedFcn = createCallbackFcn(app, @DeleteRecordingsandStartNewSessionButtonPushed, true);
+            app.DeleteRecordingsandStartNewSessionButton.FontColor = [1 0 0];
             app.DeleteRecordingsandStartNewSessionButton.Position = [10 31 318 38];
             app.DeleteRecordingsandStartNewSessionButton.Text = 'Delete Recordings and Start New Session';
 
@@ -1973,13 +1968,13 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             % Create SavetoFileButton
             app.SavetoFileButton = uibutton(app.SaveTab, 'push');
             app.SavetoFileButton.ButtonPushedFcn = createCallbackFcn(app, @SavetoFileButtonPushed, true);
-            app.SavetoFileButton.Position = [24 19 286 22];
+            app.SavetoFileButton.Position = [26 56 286 22];
             app.SavetoFileButton.Text = 'Save to File!';
 
             % Create BasenameEditField
             app.BasenameEditField = uieditfield(app.SaveTab, 'text');
             app.BasenameEditField.ValueChangedFcn = createCallbackFcn(app, @BasenameEditFieldValueChanged, true);
-            app.BasenameEditField.Position = [11 80 311 22];
+            app.BasenameEditField.Position = [11 113 238 22];
 
             % Create FilepathEditField
             app.FilepathEditField = uieditfield(app.SaveTab, 'text');
@@ -1995,11 +1990,11 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             app.filebrowser = uitable(app.SaveTab);
             app.filebrowser.ColumnName = {'Directory Contents'};
             app.filebrowser.RowName = {};
-            app.filebrowser.Position = [11 133 311 282];
+            app.filebrowser.Position = [11 163 311 252];
 
             % Create BasenameEditFieldLabel
             app.BasenameEditFieldLabel = uilabel(app.SaveTab);
-            app.BasenameEditFieldLabel.Position = [11 108 60 22];
+            app.BasenameEditFieldLabel.Position = [12 133 60 22];
             app.BasenameEditFieldLabel.Text = 'File Name';
 
             % Create FilepathEditFieldLabel
@@ -2010,12 +2005,26 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             % Create MATFileCheckBox
             app.MATFileCheckBox = uicheckbox(app.SaveTab);
             app.MATFileCheckBox.Text = '.MAT File';
-            app.MATFileCheckBox.Position = [12 51 72 22];
+            app.MATFileCheckBox.Position = [12 85 72 22];
 
             % Create EODFileCheckBox
             app.EODFileCheckBox = uicheckbox(app.SaveTab);
             app.EODFileCheckBox.Text = '.EOD File';
-            app.EODFileCheckBox.Position = [100 52 74 22];
+            app.EODFileCheckBox.Position = [95 86 74 22];
+
+            % Create ClearRecordingsandStartNewSessionButton
+            app.ClearRecordingsandStartNewSessionButton = uibutton(app.SaveTab, 'push');
+            app.ClearRecordingsandStartNewSessionButton.ButtonPushedFcn = createCallbackFcn(app, @DeleteRecordingsandStartNewSessionButtonPushed, true);
+            app.ClearRecordingsandStartNewSessionButton.BackgroundColor = [0.9412 0.9412 0.9412];
+            app.ClearRecordingsandStartNewSessionButton.FontColor = [1 0 0];
+            app.ClearRecordingsandStartNewSessionButton.Position = [26 16 286 24];
+            app.ClearRecordingsandStartNewSessionButton.Text = 'Clear Recordings and Start New Session';
+
+            % Create AutoNameButton
+            app.AutoNameButton = uibutton(app.SaveTab, 'push');
+            app.AutoNameButton.ButtonPushedFcn = createCallbackFcn(app, @AutoNameButtonPushed, true);
+            app.AutoNameButton.Position = [260 114 66 22];
+            app.AutoNameButton.Text = 'AutoName';
 
             % Create LogStatusText
             app.LogStatusText = uilabel(app.DataAcquisitionLiveFigure);
