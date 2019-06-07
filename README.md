@@ -1,6 +1,10 @@
 # EODRecorder2
 Written by Jason Gallant, includes modified code from B. Scott Jackson for EOD reading
 
+### Bugs:
+Submit them here:
+https://github.com/msuefishlab/eodrecorder2/issues
+
 ### About this Software
 This is the new Gallant lab standard EOD recording software, which is capable of using either an audio interface or a National Instruments board for EOD recording.
 
