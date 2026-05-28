@@ -94,8 +94,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         filebrowser                   matlab.ui.control.Table
         BasenameEditFieldLabel        matlab.ui.control.Label
         FilepathEditFieldLabel        matlab.ui.control.Label
-        MATFileCheckBox               matlab.ui.control.CheckBox
-        EODFileCheckBox               matlab.ui.control.CheckBox
+
         ClearRecordingsandStartNewSessionButton  matlab.ui.control.Button
         AutoNameButton                matlab.ui.control.Button
         LogStatusText                 matlab.ui.control.Label
@@ -766,92 +765,32 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             end
         end
         
-        function saveEOD(app,datain,matout,eodout)
-            eod=[];
-            for i=1:length(datain)
-                 eod(i).DeviceInfo=datain(i).Metadata.DeviceInfo;
-                 eod(i).Channel=datain(i).Metadata.Channel;
-                 eod(i).MeasurementType=datain(i).Metadata.MeasurementType;
-                 eod(i).Range=datain(i).Metadata.Range;
-                 eod(i).Coupling=datain(i).Metadata.Coupling;
-                 eod(i).TerminalConfig=datain(i).Metadata.TerminalConfig;
-                 eod(i).Rate=datain(i).Metadata.Rate;
-                 eod(i).amplifiercoupling=datain(i).Metadata.amplifiercoupling;
-                 eod(i).species=datain(i).Metadata.species;
-                 eod(i).location=datain(i).Metadata.location;
-                 eod(i).temp=datain(i).Metadata.temp;
-                 eod(i).specimenno=datain(i).Metadata.specimenno;
-                 eod(i).gain=datain(i).Metadata.gain;
-                 eod(i).comments=datain(i).Metadata.comments;
-                 eod(i).time=datain(i).Metadata.time; %this should be the "time" of recording
-                 eod(i).date=datain(i).Metadata.date; %this should be the "date" of recording
-                 eod(i).wave=datain(i).Data;
-                 eod(i).LP_filter=datain(i).Metadata.LP_filter;
-                 eod(i).HP_filter=datain(i).Metadata.HP_filter;
-                 eod(i).conductivity=datain(i).Metadata.conductivity;
-                 eod(i).vd=datain(i).Metadata.vd;
-                 eod(i).calibrated=strrep(strrep(sprintf('%d', datain(i).Metadata.calibrated), '1', 'True'), '0', 'False');
-                 eod(i).calibrationratio=datain(i).Metadata.calibrationratio;
-                 eod(i).calibrationdistance=datain(i).Metadata.calibrationdistance;
+        function saveJSON(~, datain, jsonout)
+            entries = cell(1, length(datain));
+            for i = 1:length(datain)
+                m = datain(i).Metadata;
+                e = struct();
+                di.ID         = m.DeviceInfo.ID;
+                di.Model      = m.DeviceInfo.Model;
+                di.VendorID   = m.DeviceInfo.Vendor.ID;
+                di.Resolution = m.DeviceInfo.Subsystems.Resolution;
+                e.DeviceInfo        = di;
+                e.time              = m.time;
+                e.date              = m.date;
+                e.Rate              = m.Rate;
+                e.wave              = datain(i).Data(:)';
+                e.comments          = m.comments;
+                e.species           = m.species;
+                e.location          = m.location;
+                e.specimenno        = num2str(m.specimenno);
+                e.gain              = m.gain;
+                e.amplifiercoupling = m.amplifiercoupling;
+                e.temp              = m.temp;
+                entries{i} = e;
             end
-            
-            if app.EODFileCheckBox.Value
-                fout = fopen(eodout, 'w');
-                 for i=1:length(datain)
-                     
-                    %write to binary EOD File
-                    version = 2; %new version for the gallant lab
-                    n_bits = eod(i).DeviceInfo.Subsystems.Resolution;
-                    adrange=2^eod(i).DeviceInfo.Subsystems.Resolution;
-                    n_bytes = 2;
-                    data_polarity = 2;
-                    user_data = [0 0 0 0 0 0];
-                    s_rate = eod(i).Rate;
-                    n_pts = length(eod(i).wave);
-                    wave = eod(i).wave;
-                    date = eod(i).date;
-                    time = eod(i).time;
-                    coupling= eod(i).amplifiercoupling;
-                    wave_text=['Time = ', time, ';',...
-                        'Date = ', date, ';',...
-                        'Specimen = ', eod(i).specimenno, ';',...
-                        'Species = ', eod(i).species, ';',...
-                        'Location = ', eod(i).location, ';',...
-                        'Temperature = ', eod(i).temp, ';',...
-                        'Comments = ', eod(i).comments, ';',...
-                        'Gain =  ', eod(i).gain,';', ...
-                        'Coupling =  ', coupling,';',...
-                        'LowPass = ', eod(i).LP_filter,';',...
-                        'HighPass = ', eod(i).HP_filter,';',...
-                        'Conductivity = ', eod(i).conductivity,';',...
-                        'VoltageDivider = ', eod(i).vd,';',...
-                        'EODCalibrated = ', eod(i).calibrated,';',...
-                        'EODCalibrationRatio = ', eod(i).calibrationratio,';',...
-                        'EODCalibrationDistance = ', eod(i).calibrationdistance];
-                    nchar_text = length(strjoin(wave_text));
-                    %  writes a multiwave file from the data in memory to the currently opened
-                    fwrite(fout,version,'char');
-                    fwrite(fout,nchar_text,'short');
-                    %  convert wave_text into array of ascii integers
-                    fwrite(fout,strjoin(wave_text),'char');
-                    % output a null character to terminate string
-                    %count=fwrite(fout,0,'char');  
-                    fwrite(fout,n_bits,'char');
-                    fwrite(fout,n_bytes,'char');
-                    fwrite(fout,data_polarity,'char');
-                    fwrite(fout,user_data,'float');
-                    fwrite(fout,s_rate,'ulong');
-                    fwrite(fout,adrange,'float');
-                    fwrite(fout,n_pts,'long');
-                    fwrite(fout,wave,'double');
-                 end
-                 fclose(fout);
-            end
-            
-            if app.MATFileCheckBox.Value
-                save(matout,'eod');
-            end
-            
+            fid = fopen(jsonout, 'w');
+            fwrite(fid, jsonencode(entries), 'char');
+            fclose(fid);
         end
         
         function metaupdate(app)   
@@ -1313,24 +1252,16 @@ classdef eodrecorder2_source < matlab.apps.AppBase
 
         % Button pushed function: SavetoFileButton
         function SavetoFileButtonPushed(app, event)
-            eodfile=fullfile(app.eodfilepath,[app.eodbasename,'.eod']);
-            matfile=fullfile(app.eodfilepath,[app.eodbasename,'.mat']);
-            
-            if exist(eodfile, 'file') == 2 || exist(matfile,'file') == 2
-                uialert(app.DataAcquisitionLiveFigure,'A file with this basename (.EOD or .MAT) already exists.  For data security, EOD/MAT pairs can only be created at the same time. Either delete the offending file, or choose a different basename!','File Exists');
+            jsonfile = fullfile(app.eodfilepath, [app.eodbasename, '.json']);
+
+            if exist(jsonfile, 'file') == 2
+                uialert(app.DataAcquisitionLiveFigure, 'A .json file with this basename already exists. Either delete the offending file, or choose a different basename!', 'File Exists');
                 app.LogStatusText.Text = 'Save was cancelled.';
-         
             else
-                if app.EODFileCheckBox.Value == 0 && app.MATFileCheckBox.Value == 0
-                    uialert(app.DataAcquisitionLiveFigure,'Please choose at least one output type','No output type selected');
-                    app.LogStatusText.Text = 'Nothing was saved!';
-                else
-                    saveEOD(app, app.CapturedData, matfile,eodfile);
-                    app.LogStatusText.Text = sprintf('Saved data to ''%s'' !', app.eodbasename);
-                    refresh_filebrowser(app);
-                end
+                saveJSON(app, app.CapturedData, jsonfile);
+                app.LogStatusText.Text = sprintf('Saved data to ''%s'' !', app.eodbasename);
+                refresh_filebrowser(app);
             end
-            
         end
 
         % Button pushed function: ChooseButton
@@ -2002,15 +1933,6 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             app.FilepathEditFieldLabel.Position = [11 458 48 22];
             app.FilepathEditFieldLabel.Text = 'Filepath';
 
-            % Create MATFileCheckBox
-            app.MATFileCheckBox = uicheckbox(app.SaveTab);
-            app.MATFileCheckBox.Text = '.MAT File';
-            app.MATFileCheckBox.Position = [12 85 72 22];
-
-            % Create EODFileCheckBox
-            app.EODFileCheckBox = uicheckbox(app.SaveTab);
-            app.EODFileCheckBox.Text = '.EOD File';
-            app.EODFileCheckBox.Position = [95 86 74 22];
 
             % Create ClearRecordingsandStartNewSessionButton
             app.ClearRecordingsandStartNewSessionButton = uibutton(app.SaveTab, 'push');
