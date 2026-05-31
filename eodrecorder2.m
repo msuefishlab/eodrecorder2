@@ -546,26 +546,22 @@ classdef eodrecorder2 < matlab.apps.AppBase
         end
 
 
-        function writeWavSidecar(~, jsonFilepath, metadata)
+        function writeWavSidecar(app, jsonFilepath, metadata)
         %WRITEWAVSIDECAR Writes a JSON metadata companion next to a .wav file.
         % Uses a '.sidecar.json' extension so it is not confused with the '.json'
-        % EOD data files written by saveJSON. Fields that jsonencode cannot
-        % serialize directly (datetime, nested device-info structs/handles) are
-        % converted to strings first.
+        % EOD data files written by saveJSON. The ENTIRE metadata struct is
+        % sanitized first because several fields cannot be passed to jsonencode
+        % as-is: TriggerTime is a datetime, and Range / DeviceInfo (and its
+        % Vendor / Subsystems members) are DAQ objects or nested structs.
 
-            m = metadata;
+            m = sanitizeForJSON(app, metadata);
 
-            % datetime -> ISO 8601 string
-            if isfield(m, 'TriggerTime') && isdatetime(m.TriggerTime)
-                m.TriggerTime = char(m.TriggerTime, 'yyyy-MM-dd''T''HH:mm:ss.SSS');
+            % 'PrettyPrint' requires R2021a+; fall back to compact JSON if absent.
+            try
+                txt = jsonencode(m, 'PrettyPrint', true);
+            catch
+                txt = jsonencode(m);
             end
-
-            % DeviceInfo nested struct: flatten unserializable members to strings
-            if isfield(m, 'DeviceInfo')
-                m.DeviceInfo = sanitizeForJSON(m.DeviceInfo);
-            end
-
-            txt = jsonencode(m, 'PrettyPrint', true);   % PrettyPrint: R2021a+
 
             fid = fopen(jsonFilepath, 'w');
             if fid == -1
@@ -573,19 +569,50 @@ classdef eodrecorder2 < matlab.apps.AppBase
             end
             fwrite(fid, txt, 'char');
             fclose(fid);
+        end
 
-            function s = sanitizeForJSON(s)
-                if ~isstruct(s)
-                    if isnumeric(s) || ischar(s) || islogical(s) || isstring(s)
-                        return
-                    else
-                        s = char(string(s));   % fallback: stringify objects/handles
-                        return
+        function s = sanitizeForJSON(app, s)
+        %SANITIZEFORJSON Recursively coerce a value into something jsonencode can
+        % serialize. datetimes become ISO strings; numeric/char/logical/string
+        % values pass through; structs are recursed field by field (struct arrays
+        % become cell arrays); DAQ objects/handles are expanded to a struct via
+        % struct() when possible, otherwise stringified. Never throws.
+            if isdatetime(s)
+                s = char(s, 'yyyy-MM-dd''T''HH:mm:ss.SSS');
+            elseif isnumeric(s) || islogical(s) || ischar(s) || isstring(s)
+                % already directly serializable
+            elseif isstruct(s)
+                if numel(s) ~= 1
+                    c = cell(size(s));
+                    for k = 1:numel(s)
+                        c{k} = sanitizeForJSON(app, s(k));
                     end
+                    s = c;
+                    return
                 end
                 f = fieldnames(s);
                 for k = 1:numel(f)
-                    s.(f{k}) = sanitizeForJSON(s.(f{k}));
+                    s.(f{k}) = sanitizeForJSON(app, s.(f{k}));
+                end
+            else
+                % DAQ objects (e.g. daq.Range), handles, etc.: try struct(),
+                % then recurse so numeric members (like Range Min/Max) survive;
+                % fall back to a string if that is not possible.
+                converted = false;
+                try
+                    ws = warning('off', 'MATLAB:structOnObject');
+                    sc = struct(s);
+                    warning(ws);
+                    s = sanitizeForJSON(app, sc);
+                    converted = true;
+                catch
+                end
+                if ~converted
+                    try
+                        s = char(string(s));
+                    catch
+                        s = sprintf('<%s>', class(s));
+                    end
                 end
             end
         end
