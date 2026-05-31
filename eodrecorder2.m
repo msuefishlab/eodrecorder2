@@ -72,6 +72,8 @@ classdef eodrecorder2_source < matlab.apps.AppBase
         TimedPanel                    matlab.ui.container.Panel
         LengthsecLabel                matlab.ui.control.Label
         recordlength                  matlab.ui.control.NumericEditField
+        SaveMATCheckBox               matlab.ui.control.CheckBox
+        SaveWAVCheckBox               matlab.ui.control.CheckBox
         SinglePanel                   matlab.ui.container.Panel
         CaptureButton                 matlab.ui.control.Button
         LevelVLabel                   matlab.ui.control.Label
@@ -454,8 +456,141 @@ classdef eodrecorder2_source < matlab.apps.AppBase
              matObj.time=metadata.time; %this should be the "time" of recording
              matObj.date=metadata.date; %this should be the "date" of recording
         end
-        
-        
+
+
+        function binFile2WAV(~, filenameIn, filenameOut, numColumns, sampleRate)
+        %BINFILE2WAV Streams column 2 (wave) of a binary double file to a 32-bit
+        % IEEE-float mono WAV without loading the whole signal into memory.
+        % Mirrors binFile2MAT's chunked read. Timestamps (column 1) are ignored.
+        % The WAV stores the exact (un-normalized) voltage sample values, so EOD
+        % signals exceeding +/-1.0 are preserved without clipping.
+
+            % If filenameIn does not exist, error out
+            if ~exist(filenameIn, 'file')
+                error('Input binary file ''%s'' not found. Specify a different file name.', filenameIn);
+            end
+
+            % If output WAV file already exists, delete it
+            if exist(filenameOut, 'file')
+                delete(filenameOut)
+            end
+
+            % Determine number of rows in the binary file (same approach as binFile2MAT).
+            % The exact sample count is known up front, so the RIFF size fields can be
+            % written in the header directly (no fseek/patch step needed).
+            fileInfo = dir(filenameIn);
+            numRows = floor(fileInfo.bytes/(8*double(numColumns)));
+
+            % WAV format parameters: 32-bit IEEE float, mono
+            numChannels = 1;
+            bytesPerSample = 4;             % float32
+            fs = round(sampleRate);         % header sample rate must be a positive integer
+            if fs < 1
+                fs = 1;
+            end
+            dataBytes = numRows * numChannels * bytesPerSample;
+            byteRate = fs * numChannels * bytesPerSample;
+            blockAlign = numChannels * bytesPerSample;
+
+            % 4 GB guard: 32-bit RIFF size fields cap the file size. Warn, do not block.
+            if (36 + dataBytes) > (2^32 - 1)
+                warning(['WAV size exceeds the 4 GB limit of 32-bit RIFF size fields; ', ...
+                         'the resulting .wav may be unreadable. Consider .leod.mat instead.']);
+            end
+
+            % Open output little-endian (RIFF/WAVE is little-endian)
+            fidOut = fopen(filenameOut, 'w', 'l');
+            if fidOut == -1
+                error('Could not open output WAV file ''%s''.', filenameOut);
+            end
+
+            % Write 44-byte canonical IEEE-float-mono header.
+            % ASCII tags are written as 'char' (byte-order independent); numeric
+            % fields as little-endian uint16/uint32.
+            fwrite(fidOut, 'RIFF',         'char');     % ChunkID
+            fwrite(fidOut, 36 + dataBytes, 'uint32');   % ChunkSize
+            fwrite(fidOut, 'WAVE',         'char');     % Format
+            fwrite(fidOut, 'fmt ',         'char');     % Subchunk1ID (note trailing space)
+            fwrite(fidOut, 16,             'uint32');   % Subchunk1Size
+            fwrite(fidOut, 3,              'uint16');   % AudioFormat = 3 (IEEE float)
+            fwrite(fidOut, numChannels,    'uint16');   % NumChannels
+            fwrite(fidOut, fs,             'uint32');   % SampleRate
+            fwrite(fidOut, byteRate,       'uint32');   % ByteRate
+            fwrite(fidOut, blockAlign,     'uint16');   % BlockAlign
+            fwrite(fidOut, 32,             'uint16');   % BitsPerSample
+            fwrite(fidOut, 'data',         'char');     % Subchunk2ID
+            fwrite(fidOut, dataBytes,      'uint32');   % Subchunk2Size
+
+            % Open input binary file
+            fid = fopen(filenameIn,'r');
+
+            % Stream samples in chunks (identical loop shape to binFile2MAT)
+            numRowsPerChunk = 10E+6;
+            ii = 0;
+
+            while(ii < numRows)
+
+                chunkSize = min(numRowsPerChunk, numRows-ii);
+
+                data = fread(fid, [numColumns,chunkSize], 'double');
+
+                % Column 2 = wave; write as little-endian 32-bit float.
+                % Explicit single() cast documents the down-cast to 32-bit float.
+                fwrite(fidOut, single(data(2,:)), 'single');
+
+                ii = ii + chunkSize;
+            end
+
+            fclose(fid);
+            fclose(fidOut);
+        end
+
+
+        function writeWavSidecar(~, jsonFilepath, metadata)
+        %WRITEWAVSIDECAR Writes a JSON metadata companion next to a .wav file.
+        % Uses a '.sidecar.json' extension so it is not confused with the '.json'
+        % EOD data files written by saveJSON. Fields that jsonencode cannot
+        % serialize directly (datetime, nested device-info structs/handles) are
+        % converted to strings first.
+
+            m = metadata;
+
+            % datetime -> ISO 8601 string
+            if isfield(m, 'TriggerTime') && isdatetime(m.TriggerTime)
+                m.TriggerTime = char(m.TriggerTime, 'yyyy-MM-dd''T''HH:mm:ss.SSS');
+            end
+
+            % DeviceInfo nested struct: flatten unserializable members to strings
+            if isfield(m, 'DeviceInfo')
+                m.DeviceInfo = sanitizeForJSON(m.DeviceInfo);
+            end
+
+            txt = jsonencode(m, 'PrettyPrint', true);   % PrettyPrint: R2021a+
+
+            fid = fopen(jsonFilepath, 'w');
+            if fid == -1
+                error('Could not open sidecar ''%s''.', jsonFilepath);
+            end
+            fwrite(fid, txt, 'char');
+            fclose(fid);
+
+            function s = sanitizeForJSON(s)
+                if ~isstruct(s)
+                    if isnumeric(s) || ischar(s) || islogical(s) || isstring(s)
+                        return
+                    else
+                        s = char(string(s));   % fallback: stringify objects/handles
+                        return
+                    end
+                end
+                f = fieldnames(s);
+                for k = 1:numel(f)
+                    s.(f{k}) = sanitizeForJSON(s.(f{k}));
+                end
+            end
+        end
+
+
         function filteredDevices = filterDevicesBySubsystem(~, devices, subsystemTypes)
         %filterDevicesBySubsystem Filter DAQ device array by subsystem type
         %  devices is a DAQ device info array
@@ -683,50 +818,74 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             
             if app.LogRequested
                 % Log data to file switch is on
-                % Save logged data to MAT file (unless the user clicks Cancel in the "Save As" dialog)
-                
+                % Save logged data to the selected format(s): .leod.mat and/or .wav
+                % (unless the user clicks Cancel in the "Save As" dialog)
+
                 % Close temporary binary file
-                 
+
                 if app.TempFile ~= -1
                     fclose(app.TempFile);
                 end
-                
-                % Gather metadata in preparation for saving to MAT file
+
+                % Gather metadata in preparation for saving
                 % Store relevant Daq device info
-                
+
                 metadata = gathermetadata(app);
 
-                % Open "Save As" to request destination MAT file path and file name from user
-                [filename, pathname] = uiputfile({'*.leod.mat'}, 'Save as',...
-                    fullfile(app.Filepath, app.Filename));
-                
-                if ~(isequal(filename,0) || isequal(pathname,0))
-                    % User specified a file name in a folder with write permission
-                    app.Filename = filename;
-                    app.Filepath = pathname;
-                    cancelSaveAs = false;
-                else
-                    %  User clicked Cancel in "Save As" dialog
-                    cancelSaveAs = true;
-                end
-                
-                if ~cancelSaveAs
-                    % Convert data from binary file to MAT file
-                    matFilepath = fullfile(app.Filepath, app.Filename);
-                    app.LogStatusText.Text = 'Saving data...';
-                    drawnow;
-                    
-                    numColumns = 2;
-                    binFile2MAT(app, app.TempFilename, matFilepath, numColumns, metadata);
-                    app.LogStatusText.Text = sprintf('Saved data to ''%s'' !', app.Filename);
+                % Determine which output format(s) the user requested
+                wantMAT = app.SaveMATCheckBox.Value;
+                wantWAV = app.SaveWAVCheckBox.Value;
+
+                if ~wantMAT && ~wantWAV
+                    app.LogStatusText.Text = 'No output format selected - data not saved.';
                     set(app.LivePlotLine, 'XData', NaN, 'YData', NaN);
-                    drawnow;
-                else
-                    % User clicked Cancel in "Save As" dialog
-                    % Inform user that data has not been saved
+                    return
+                end
+
+                % One save dialog for a format-neutral basename; both outputs are
+                % derived from it so the files land together with matching names.
+                defaultBase = regexprep(app.Filename, '\.leod\.mat$', '');
+                [filename, pathname] = uiputfile({'*.*'}, 'Save recording as',...
+                    fullfile(app.Filepath, defaultBase));
+
+                if isequal(filename,0) || isequal(pathname,0)
+                    %  User clicked Cancel in "Save As" dialog
                     app.LogStatusText.Text = 'Save was cancelled.';
                     set(app.LivePlotLine, 'XData', NaN, 'YData', NaN);
+                    return
                 end
+
+                % User specified a file name in a folder with write permission.
+                % Strip any extension the user typed to get a clean basename
+                % (handles a ".leod" stem left over from ".leod.mat").
+                app.Filepath = pathname;
+                app.Filename = filename;
+                [~, base] = fileparts(filename);
+                base = regexprep(base, '\.leod$', '');
+
+                numColumns = 2;
+                app.LogStatusText.Text = 'Saving data...';
+                drawnow;
+
+                savedNames = {};
+                if wantMAT
+                    % Convert data from binary file to MAT file
+                    matFilepath = fullfile(pathname, [base '.leod.mat']);
+                    binFile2MAT(app, app.TempFilename, matFilepath, numColumns, metadata);
+                    savedNames{end+1} = [base '.leod.mat'];
+                end
+                if wantWAV
+                    % Convert data from binary file to 32-bit float WAV + JSON sidecar
+                    wavFilepath = fullfile(pathname, [base '.wav']);
+                    jsonFilepath = fullfile(pathname, [base '.sidecar.json']);
+                    binFile2WAV(app, app.TempFilename, wavFilepath, numColumns, metadata.Rate);
+                    writeWavSidecar(app, jsonFilepath, metadata);
+                    savedNames{end+1} = [base '.wav (+ .sidecar.json)'];
+                end
+
+                app.LogStatusText.Text = sprintf('Saved: %s', strjoin(savedNames, ', '));
+                set(app.LivePlotLine, 'XData', NaN, 'YData', NaN);
+                drawnow;
             end
         end
         
@@ -1809,6 +1968,18 @@ classdef eodrecorder2_source < matlab.apps.AppBase
             % Create recordlength
             app.recordlength = uieditfield(app.TimedPanel, 'numeric');
             app.recordlength.Position = [188 12 55 22];
+
+            % Create SaveMATCheckBox
+            app.SaveMATCheckBox = uicheckbox(app.TimedPanel);
+            app.SaveMATCheckBox.Text = '.leod.mat';
+            app.SaveMATCheckBox.Value = true;          % default preserves current behavior
+            app.SaveMATCheckBox.Position = [10 30 90 22];
+
+            % Create SaveWAVCheckBox
+            app.SaveWAVCheckBox = uicheckbox(app.TimedPanel);
+            app.SaveWAVCheckBox.Text = '.wav (32-bit float)';
+            app.SaveWAVCheckBox.Value = false;
+            app.SaveWAVCheckBox.Position = [10 6 130 22];
 
             % Create SinglePanel
             app.SinglePanel = uipanel(app.AcquireTab);
