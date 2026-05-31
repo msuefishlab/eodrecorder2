@@ -21,25 +21,47 @@ Check if you have these:
 
 > If you don’t have them, go to Add-Ons> Get Add-Ons, search for them and install them
 
-5. Run the eodrecorder2.mlapp binary
-6. To install shortcut into Matlab 'Apps' tab, run the Eod Recorder.mlappinstall file
+5. Run the app: open `eodrecorder2.m` in MATLAB and press **Run**, or type `eodrecorder2` in the MATLAB command window.
 
 #### Output files:
-This software introduces a few internal file name conventions:
+This software uses the following file formats:
 
-- **.eod**	   - Legacy Hopkins Lab Binary EOD Formatted File (Updated to Version 2).  Multiple Recordings per EOD.  Preliminary analysis reveals that these are not as space efficient at MAT files.
+- **.json** — JSON array, one object per captured waveform. Fields: `DeviceInfo`, `time`, `date`, `Rate`, `wave`, `comments`, `species`, `location`, `specimenno`, `gain`, `amplifiercoupling`, `temp`.
 
-- **.mat**  Matlab formatted recording of EOD.  Multiple Recordings Per EOD inside the 'eod' structure.
-
-- **.leod.mat**  - long recording of EOD.  One recording per file.
+- **.leod.mat** — long/timed recording of EOD. One recording per file.
 
 #### Working with output files:
-To open a .leod or .mat file:
-eod=load('Desktop\TEST2019\mytest.leod.mat')
 
-To open a .eod file:
+**MATLAB**
+```matlab
+fid = fopen('myrecording.json');
+eod = jsondecode(char(fread(fid, inf, 'char')'));
+fclose(fid);
+% eod(1).wave, eod(1).species, etc.
+```
 
-[eodwave, info, infoText] = ReadEODFile(filename, numToRead)
+**Python**
+```python
+import json
+with open('myrecording.json') as f:
+    eod = json.load(f)
+# eod[0]['wave'], eod[0]['species'], etc.
+```
+
+**R**
+```r
+library(jsonlite)
+eod_data <- read_json("myrecording.json")
+# length(eod_data)          — number of recordings
+# names(eod_data[[1]])      — available fields
+# eod_data[[1]]$wave        — waveform samples
+# eod_data[[1]]$specimenno  — specimen number, etc.
+```
+
+To open a .leod.mat file:
+```matlab
+eod = load('mytest.leod.mat')
+```
 
 
 
