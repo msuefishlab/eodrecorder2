@@ -1,4 +1,4 @@
-classdef eodrecorder2_source < matlab.apps.AppBase
+classdef eodrecorder2 < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
@@ -2345,7 +2345,7 @@ classdef eodrecorder2_source < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = eodrecorder2_source
+        function app = eodrecorder2
 
             % Create UIFigure and components
             createComponents(app)
