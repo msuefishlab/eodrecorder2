@@ -871,9 +871,21 @@ classdef eodrecorder2 < matlab.apps.AppBase
 
                 % One save dialog for a format-neutral basename; both outputs are
                 % derived from it so the files land together with matching names.
+                % Use a concrete filter extension (not '*.*'): with '*.*' Windows
+                % appends the filter's wildcard to an extension-less name, yielding
+                % e.g. 'longrecord.*', which Windows rejects as an invalid file name
+                % (the Save button silently does nothing). Seeding a real default
+                % extension means the appended extension is always valid; the
+                % basename is recovered by stripping below.
                 defaultBase = regexprep(app.Filename, '\.leod\.mat$', '');
-                [filename, pathname] = uiputfile({'*.*'}, 'Save recording as',...
-                    fullfile(app.Filepath, defaultBase));
+                if isempty(defaultBase)
+                    defaultBase = 'longrecord';
+                end
+                [filename, pathname] = uiputfile( ...
+                    {'*.leod.mat', 'EOD recording (*.leod.mat)'; ...
+                     '*.wav',      'WAV audio (*.wav)'}, ...
+                    'Save recording as', ...
+                    fullfile(app.Filepath, [defaultBase '.leod.mat']));
 
                 if isequal(filename,0) || isequal(pathname,0)
                     %  User clicked Cancel in "Save As" dialog
